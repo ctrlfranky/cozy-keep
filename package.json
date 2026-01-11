@@ -1,0 +1,8 @@
+package.json{
+  "name": "cozy-keep",
+  "version": "1.0.0",
+  "description": "WoW Guild Housing Management Website",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
