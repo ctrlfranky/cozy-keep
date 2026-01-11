@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Keep - Guild Housing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4a9eff; --secondary: #1a1a2e; --accent: #ffd700; --bg-dark: #0a0a12; --bg-medium: #12121f; --bg-card: #1a1a2e; --text: #e0e0e0; --glow: rgba(74, 158, 255, 0.5); --success: #44ff88; --warning: #ffaa00; --danger: #ff4466; }
+        .horde { --primary: #ff4a4a; --accent: #ff8c00; --glow: rgba(255, 74, 74, 0.5); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Open Sans', sans-serif; background: var(--bg-dark); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        #particles-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .bg-gradient { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 0%, rgba(74, 158, 255, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 40%); z-index: 0; }
+        .horde .bg-gradient { background: radial-gradient(ellipse at 50% 0%, rgba(255, 74, 74, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(255, 140, 0, 0.1) 0%, transparent 40%); }
+        header { position: relative; z-index: 10; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); background: rgba(10, 10, 18, 0.9); flex-wrap: wrap; gap: 15px; }
+        .logo { font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; cursor: pointer; }
+        .header-nav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .nav-btn { padding: 10px 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text); cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+        .nav-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .nav-btn.admin-btn { background: linear-gradient(135deg, #6b21a8, #9333ea); border-color: #9333ea; }
+        .faction-switch { display: flex; gap: 8px; }
+        .faction-btn { padding: 10px 20px; border: 2px solid transparent; border-radius: 8px; cursor: pointer; font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; }
+        .faction-btn.alliance { background: linear-gradient(135deg, #1a3a6e, #2a5298); border-color: #4a9eff; color: #fff; }
+        .faction-btn.horde-btn { background: linear-gradient(135deg, #6e1a1a, #982a2a); border-color: #ff4a4a; color: #fff; }
+        .faction-btn:hover, .faction-btn.active { transform: scale(1.05); box-shadow: 0 0 20px var(--glow); }
+        main { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; padding: 30px; }
+        .view-container { display: none; }
+        .view-container.active { display: block; }
+        .subdivision-tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
+        .subdivision-tab { padding: 10px 20px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+        .subdivision-tab:hover { border-color: var(--primary); }
+        .subdivision-tab.active { background: linear-gradient(135deg, var(--primary), #3a8eef); border-color: var(--primary); box-shadow: 0 0 15px var(--glow); }
+        .hero { text-align: center; padding: 30px 0; }
+        .hero h1 { font-family: 'Cinzel', serif; font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(135deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: rgba(255,255,255,0.6); font-size: 1rem; }
+        .neighborhood-badge { display: inline-block; padding: 8px 25px; margin-top: 12px; background: var(--bg-card); border: 1px solid var(--primary); border-radius: 25px; font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--accent); box-shadow: 0 0 20px var(--glow); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 25px 0; }
+        .stat-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 18px; text-align: center; transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .stat-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .stat-value { font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+        .plot-map-container { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; margin: 25px 0; }
+        .section-title { font-family: 'Cinzel', serif; font-size: 1.3rem; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+        .plot-grid { display: grid; grid-template-columns: repeat(11, 1fr); gap: 6px; }
+        .plot { aspect-ratio: 1; background: rgba(30, 30, 50, 0.8); border: 2px solid rgba(255,255,255,0.1); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; font-size: 0.6rem; padding: 3px; }
+        .plot:hover { transform: scale(1.12); z-index: 10; border-color: var(--primary); }
+        .plot.empty { border-style: dashed; opacity: 0.5; }
+        .plot.empty:hover { opacity: 1; border-color: var(--accent); }
+        .plot.claimed { border-color: var(--primary); background: linear-gradient(135deg, rgba(74, 158, 255, 0.2), rgba(30, 30, 50, 0.8)); }
+        .plot.pending { border-color: var(--warning); background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(30, 30, 50, 0.8)); animation: pending-pulse 2s ease-in-out infinite; }
+        @keyframes pending-pulse { 0%, 100% { box-shadow: 0 0 5px rgba(255, 170, 0, 0.3); } 50% { box-shadow: 0 0 15px rgba(255, 170, 0, 0.6); } }
+        .plot-number { font-weight: 600; color: rgba(255,255,255,0.4); font-size: 0.65rem; }
+        .plot-owner { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95%; font-size: 0.55rem; }
+        .member-list-container { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; margin: 25px 0; overflow-x: auto; }
+        .member-table { width: 100%; border-collapse: collapse; }
+        .member-table th { padding: 10px 12px; text-align: left; font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--primary); border-bottom: 2px solid var(--primary); }
+        .member-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+        .member-table tr:hover td { background: rgba(74, 158, 255, 0.1); }
+        .request-section { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; margin: 25px 0; }
+        .form-row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+        .form-input, .form-select { flex: 1; min-width: 180px; padding: 10px 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text); font-size: 0.95rem; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px var(--glow); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #3a8eef); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 5px 20px var(--glow); }
+        .btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.2); }
+        .admin-view { background: var(--bg-card); border-radius: 16px; padding: 25px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; gap: 12px; }
+        .admin-header h2 { font-family: 'Cinzel', serif; font-size: 1.6rem; color: var(--accent); }
+        .admin-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .admin-tab { padding: 10px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+        .admin-tab:hover { border-color: var(--primary); }
+        .admin-tab.active { background: var(--primary); border-color: var(--primary); }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        .admin-plot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin: 15px 0; }
+        .admin-plot { padding: 12px 8px; background: rgba(30, 30, 50, 0.8); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+        .admin-plot:hover { border-color: var(--primary); transform: scale(1.02); }
+        .admin-plot.claimed { border-color: var(--success); background: rgba(68, 255, 136, 0.1); }
+        .admin-plot.pending { border-color: var(--warning); background: rgba(255, 170, 0, 0.1); }
+        .admin-plot-number { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--accent); }
+        .admin-plot-owner { font-size: 0.7rem; color: var(--text); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .request-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .request-info h4 { color: var(--accent); margin-bottom: 4px; font-size: 0.95rem; }
+        .request-info p { font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+        .request-actions { display: flex; gap: 8px; }
+        .roster-container { max-height: 350px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; }
+        .roster-member { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; }
+        .roster-member:hover { background: rgba(74, 158, 255, 0.1); }
+        .roster-member.selected { background: rgba(74, 158, 255, 0.2); border-left: 3px solid var(--primary); }
+        .roster-member-name { font-weight: 600; font-size: 0.9rem; }
+        .roster-member-rank { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+        .subdivision-item { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .subdivision-item.inactive { opacity: 0.5; }
+        .subdivision-name-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 0.9rem; width: 200px; }
+        .subdivision-name-input:focus { outline: none; border-color: var(--primary); }
+        .subdivision-toggle { padding: 6px 12px; font-size: 0.8rem; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; width: 100%; max-width: 380px; transform: translateY(20px); transition: transform 0.3s ease; }
+        .modal-overlay.visible .modal { transform: translateY(0); }
+        .modal h3 { font-family: 'Cinzel', serif; font-size: 1.4rem; margin-bottom: 18px; text-align: center; color: var(--accent); }
+        .modal-input { width: 100%; padding: 10px 14px; margin-bottom: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text); font-size: 0.95rem; }
+        .modal-input:focus { outline: none; border-color: var(--primary); }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 18px; }
+        .modal-buttons .btn { flex: 1; }
+        .tooltip { position: fixed; background: rgba(10, 10, 20, 0.95); border: 1px solid var(--primary); border-radius: 10px; padding: 10px; pointer-events: none; z-index: 1000; opacity: 0; transition: opacity 0.2s ease; max-width: 180px; }
+        .tooltip.visible { opacity: 1; }
+        .tooltip h4 { font-family: 'Cinzel', serif; color: var(--accent); font-size: 0.85rem; margin-bottom: 4px; }
+        .tooltip p { font-size: 0.75rem; color: rgba(255,255,255,0.7); margin: 2px 0; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; }
+        .toast { background: var(--bg-card); border: 1px solid var(--primary); border-radius: 10px; padding: 12px 18px; margin-bottom: 10px; animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+        .toast.warning { border-color: var(--warning); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        footer { position: relative; z-index: 10; text-align: center; padding: 25px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 30px; color: rgba(255,255,255,0.4); font-size: 0.8rem; }
+        @media (max-width: 768px) { header { flex-direction: column; } .plot-grid { grid-template-columns: repeat(5, 1fr); } .admin-plot-grid { grid-template-columns: repeat(5, 1fr); } main { padding: 15px; } .hero h1 { font-size: 1.6rem; } .subdivision-tabs { gap: 5px; } .subdivision-tab { padding: 8px 12px; font-size: 0.8rem; } }
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.2; pointer-events: none; z-index: 1; }
+        .orb-1 { width: 400px; height: 400px; background: var(--primary); top: -100px; left: -100px; animation: float-1 15s ease-in-out infinite; }
+        .orb-2 { width: 300px; height: 300px; background: var(--accent); bottom: -50px; right: -50px; animation: float-2 12s ease-in-out infinite; }
+        @keyframes float-1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(100px, 100px); } }
+        @keyframes float-2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-80px, -80px); } }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <canvas id="particles-canvas"></canvas>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="toast-container" id="toast-container"></div>
+    <div class="tooltip" id="tooltip"><h4 id="tooltip-title"></h4><div id="tooltip-content"></div></div>
+
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal">
+            <h3>🔐 Admin Login</h3>
+            <input type="password" class="modal-input" id="admin-password" placeholder="Enter admin password">
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeLoginModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="attemptLogin()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="assign-modal">
+        <div class="modal">
+            <h3>📍 Assign Plot <span id="assign-plot-number"></span></h3>
+            <input type="text" class="modal-input" id="assign-name" placeholder="Character name">
+            <input type="text" class="modal-input" id="assign-rank" placeholder="Guild rank (optional)">
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="clearPlot()" id="clear-plot-btn" style="display:none;">Clear</button>
+                <button class="btn btn-success" onclick="confirmAssign()">Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo" onclick="showView('public')">🏰 Cozy Keep</div>
+        <div class="header-nav">
+            <div class="faction-switch">
+                <button class="faction-btn alliance active" onclick="setFaction('alliance')">⚔️ Twilight Bluffs</button>
+                <button class="faction-btn horde-btn" onclick="setFaction('horde')">🔥 Southfury Ridge</button>
+            </div>
+            <button class="nav-btn" onclick="showView('public')" id="nav-public">🏠 Public</button>
+            <button class="nav-btn admin-btn" onclick="openAdminPanel()" id="nav-admin">🔧 Dashboard</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="view-container active" id="public-view">
+            <section class="hero">
+                <h1>✨ Guild Housing ✨</h1>
+                <p>Welcome home, champion. Your guild's sanctuary awaits.</p>
+                <div><span class="neighborhood-badge" id="neighborhood-badge">🏘️ Loading...</span></div>
+            </section>
+            <div class="subdivision-tabs" id="public-subdivision-tabs"></div>
+            <section class="stats-grid">
+                <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="stat-members">0</div><div class="stat-label">Residents</div></div>
+                <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-value" id="stat-houses">0</div><div class="stat-label">Claimed</div></div>
+                <div class="stat-card"><div class="stat-icon">📭</div><div class="stat-value" id="stat-available">0</div><div class="stat-label">Available</div></div>
+                <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+            </section>
+            <section class="plot-map-container">
+                <div class="section-title">🗺️ <span id="subdivision-title">Subdivision</span> - Plot Map</div>
+                <div class="plot-grid" id="public-plot-grid"></div>
+            </section>
+            <section class="member-list-container">
+                <div class="section-title">📋 Residents</div>
+                <table class="member-table"><thead><tr><th>Name</th><th>Plot</th><th>Rank</th><th>Status</th></tr></thead><tbody id="public-member-list"></tbody></table>
+            </section>
+            <section class="request-section">
+                <div class="section-title">📝 Request a Plot</div>
+                <p style="color: rgba(255,255,255,0.6); margin-bottom: 12px; font-size: 0.9rem;">Want to join the neighborhood? Submit a request and an officer will review it.</p>
+                <div class="form-row">
+                    <input type="text" class="form-input" id="request-name" placeholder="Your character name">
+                    <select class="form-select" id="request-plot"><option value="">Select a plot...</option></select>
+                    <button class="btn btn-primary" onclick="submitRequest()">Submit Request 🚀</button>
+                </div>
+            </section>
+        </div>
+
+        <div class="view-container" id="admin-view">
+            <div class="admin-view">
+                <div class="admin-header">
+                    <h2>🔧 Admin Dashboard</h2>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+                <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <span style="color: rgba(255,255,255,0.6);">Managing:</span>
+                    <button class="faction-btn alliance active" id="admin-alliance-btn" onclick="setFaction('alliance')" style="padding: 8px 16px; font-size: 0.85rem;">⚔️ Twilight Bluffs</button>
+                    <button class="faction-btn horde-btn" id="admin-horde-btn" onclick="setFaction('horde')" style="padding: 8px 16px; font-size: 0.85rem;">🔥 Southfury Ridge</button>
+                </div>
+                <div class="subdivision-tabs" id="admin-subdivision-tabs"></div>
+                <div class="admin-tabs">
+                    <button class="admin-tab active" onclick="showAdminTab('plots')">📍 Manage Plots</button>
+                    <button class="admin-tab" onclick="showAdminTab('requests')">📬 Requests <span id="request-count-badge"></span></button>
+                    <button class="admin-tab" onclick="showAdminTab('roster')">👥 Guild Roster</button>
+                    <button class="admin-tab" onclick="showAdminTab('subdivisions')">🏘️ Subdivisions</button>
+                    <button class="admin-tab" onclick="showAdminTab('settings')">⚙️ Settings</button>
+                </div>
+                <div class="admin-section active" id="admin-plots">
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 12px; font-size: 0.9rem;">Click on a plot to assign or edit. Green = claimed, Yellow = pending.</p>
+                    <div class="admin-plot-grid" id="admin-plot-grid"></div>
+                </div>
+                <div class="admin-section" id="admin-requests"><div id="requests-list"><p style="color: rgba(255,255,255,0.5);">No pending requests.</p></div></div>
+                <div class="admin-section" id="admin-roster">
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 12px; font-size: 0.9rem;">Add roster members, select one, then click a plot to assign.</p>
+                    <input type="text" class="form-input" id="roster-search" placeholder="Search roster..." oninput="filterRoster()" style="margin-bottom: 12px;">
+                    <div class="roster-container" id="roster-list"></div>
+                </div>
+                <div class="admin-section" id="admin-subdivisions">
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 15px; font-size: 0.9rem;">Manage subdivisions for <strong id="current-faction-name">Twilight Bluffs</strong>. Each subdivision has 55 plots.</p>
+                    <div id="subdivision-manager"></div>
+                </div>
+                <div class="admin-section" id="admin-settings">
+                    <div class="section-title">🔑 Change Password</div>
+                    <div class="form-row"><input type="password" class="form-input" id="new-password" placeholder="New admin password"><button class="btn btn-primary" onclick="changePassword()">Update</button></div>
+                    <div class="section-title" style="margin-top: 25px;">📤 Export / Import Data</div>
+                    <div class="form-row">
+                        <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
+                        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+                    </div>
+                    <div class="section-title" style="margin-top: 25px;">🗑️ Reset Data</div>
+                    <button class="btn btn-danger" onclick="resetData()">Reset All Data</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer><p>🏰 Cozy Keep Guild Housing Manager • Made with ❤️ for Azeroth</p></footer>
+
+    <script>
+        const DEFAULT_DATA = {
+            adminPassword: 'deathology87',
+            neighborhoods: {
+                alliance: { name: 'Twilight Bluffs', subdivisions: [{ id: 1, name: 'Subdivision 1', enabled: true, plots: {}, requests: [] }] },
+                horde: { name: 'Southfury Ridge', subdivisions: [{ id: 1, name: 'Subdivision 1', enabled: true, plots: {}, requests: [] }] }
+            },
+            guildRoster: []
+        };
+
+        let appData = loadData();
+        let currentFaction = 'alliance';
+        let currentSubdivision = 1;
+        let isAdmin = false;
+        let selectedRosterMember = null;
+
+        function loadData() {
+            const saved = localStorage.getItem('cozykeep_data_v2');
+            if (saved) { const data = JSON.parse(saved); if (data.neighborhoods) return data; }
+            return initDefaultData();
+        }
+
+        function initDefaultData() {
+            const data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            data.neighborhoods.alliance.subdivisions[0].plots['8'] = { name: 'Sinjarah', rank: 'Guild Master', status: 'claimed' };
+            saveData(data);
+            return data;
+        }
+
+        function saveData(data) { localStorage.setItem('cozykeep_data_v2', JSON.stringify(data || appData)); }
+        function getNeighborhood() { return appData.neighborhoods[currentFaction]; }
+        function getSubdivision(id) { return getNeighborhood().subdivisions.find(s => s.id === (id || currentSubdivision)); }
+        function getEnabledSubdivisions() { return getNeighborhood().subdivisions.filter(s => s.enabled); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initParticles();
+            renderAll();
+            document.getElementById('admin-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
+        });
+
+        function renderAll() { renderSubdivisionTabs(); isAdmin ? renderAdminView() : renderPublicView(); }
+
+        function showView(view) {
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (view === 'admin' && isAdmin) {
+                document.getElementById('admin-view').classList.add('active');
+                document.getElementById('nav-admin').classList.add('active');
+                renderAdminView();
+            } else {
+                document.getElementById('public-view').classList.add('active');
+                document.getElementById('nav-public').classList.add('active');
+                renderPublicView();
+            }
+        }
+
+        function openAdminPanel() { if (isAdmin) showView('admin'); else { document.getElementById('login-modal').classList.add('visible'); document.getElementById('admin-password').focus(); } }
+        function closeLoginModal() { document.getElementById('login-modal').classList.remove('visible'); document.getElementById('admin-password').value = ''; }
+        function attemptLogin() { if (document.getElementById('admin-password').value === appData.adminPassword) { isAdmin = true; closeLoginModal(); showView('admin'); showToast('Welcome back, officer! 🎖️', 'success'); } else showToast('Invalid password', 'error'); }
+        function logout() { isAdmin = false; showView('public'); showToast('Logged out', 'success'); }
+
+        function setFaction(faction) {
+            currentFaction = faction;
+            currentSubdivision = getEnabledSubdivisions()[0]?.id || 1;
+            document.body.classList.toggle('horde', faction === 'horde');
+            document.querySelectorAll('.faction-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll(faction === 'horde' ? '.horde-btn' : '.alliance').forEach(btn => btn.classList.add('active'));
+            initParticles();
+            renderAll();
+        }
+
+        function renderSubdivisionTabs() {
+            const enabled = getEnabledSubdivisions();
+            const neighborhood = getNeighborhood();
+            if (!enabled.find(s => s.id === currentSubdivision)) currentSubdivision = enabled[0]?.id || 1;
+            const html = enabled.map(s => {
+                const plotCount = Object.values(s.plots).filter(p => p.status === 'claimed').length;
+                return `<button class="subdivision-tab ${s.id === currentSubdivision ? 'active' : ''}" onclick="selectSubdivision(${s.id})">${s.name} <span style="opacity: 0.6; font-size: 0.8em;">(${plotCount}/55)</span></button>`;
+            }).join('');
+            document.getElementById('public-subdivision-tabs').innerHTML = html;
+            document.getElementById('admin-subdivision-tabs').innerHTML = html;
+            document.getElementById('neighborhood-badge').textContent = (currentFaction === 'alliance' ? '⚔️ ' : '🔥 ') + neighborhood.name;
+        }
+
+        function selectSubdivision(id) { currentSubdivision = id; renderAll(); }
+
+        function renderPublicView() {
+            const subdivision = getSubdivision();
+            if (!subdivision) return;
+            document.getElementById('subdivision-title').textContent = subdivision.name;
+            const plots = subdivision.plots || {};
+            const claimed = Object.values(plots).filter(p => p.status === 'claimed').length;
+            const pending = Object.values(plots).filter(p => p.status === 'pending').length;
+            document.getElementById('stat-members').textContent = claimed;
+            document.getElementById('stat-houses').textContent = claimed;
+            document.getElementById('stat-available').textContent = 55 - claimed - pending;
+            document.getElementById('stat-pending').textContent = pending;
+
+            const grid = document.getElementById('public-plot-grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 55; i++) {
+                const plot = plots[i];
+                const div = document.createElement('div');
+                div.className = 'plot ' + (plot ? (plot.status || 'claimed') : 'empty');
+                div.innerHTML = plot ? `<span class="plot-owner">${plot.name.substring(0, 6)}</span>` : `<span class="plot-number">${i}</span>`;
+                div.addEventListener('mouseenter', (e) => showPlotTooltip(e, i, plot));
+                div.addEventListener('mouseleave', hideTooltip);
+                div.addEventListener('mousemove', moveTooltip);
+                grid.appendChild(div);
+            }
+
+            const list = document.getElementById('public-member-list');
+            const members = Object.entries(plots).filter(([_, p]) => p.status === 'claimed').map(([plotId, p]) => ({ plotId, ...p })).sort((a, b) => a.name.localeCompare(b.name));
+            list.innerHTML = members.map(m => `<tr><td><strong>${m.name}</strong></td><td>Plot #${m.plotId}</td><td>${m.rank || '-'}</td><td><span style="color: var(--success);">● Resident</span></td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center; color: rgba(255,255,255,0.5);">No residents yet</td></tr>';
+
+            const select = document.getElementById('request-plot');
+            select.innerHTML = '<option value="">Select a plot...</option>';
+            for (let i = 1; i <= 55; i++) { if (!plots[i]) select.innerHTML += `<option value="${i}">Plot #${i}</option>`; }
+            renderSubdivisionTabs();
+        }
+
+        function renderAdminView() {
+            document.getElementById('current-faction-name').textContent = getNeighborhood().name;
+            renderSubdivisionTabs();
+            renderAdminPlotGrid();
+            renderRequests();
+            renderManualRoster();
+            renderSubdivisionManager();
+        }
+
+        function showAdminTab(tab) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('admin-' + tab).classList.add('active');
+        }
+
+        function renderAdminPlotGrid() {
+            const subdivision = getSubdivision();
+            if (!subdivision) return;
+            const grid = document.getElementById('admin-plot-grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 55; i++) {
+                const plot = subdivision.plots[i];
+                const div = document.createElement('div');
+                div.className = 'admin-plot' + (plot ? ' ' + (plot.status || 'claimed') : '');
+                div.innerHTML = `<div class="admin-plot-number">#${i}</div><div class="admin-plot-owner">${plot ? plot.name : 'Empty'}</div>`;
+                div.onclick = () => openAssignModal(i);
+                grid.appendChild(div);
+            }
+        }
+
+        function openAssignModal(plotId) {
+            const subdivision = getSubdivision();
+            const plot = subdivision.plots[plotId];
+            document.getElementById('assign-plot-number').textContent = '#' + plotId;
+            document.getElementById('assign-name').value = plot ? plot.name : (selectedRosterMember || '');
+            document.getElementById('assign-rank').value = plot ? (plot.rank || '') : '';
+            document.getElementById('clear-plot-btn').style.display = plot ? 'block' : 'none';
+            document.getElementById('assign-modal').classList.add('visible');
+            document.getElementById('assign-name').focus();
+            window.currentPlotId = plotId;
+        }
+
+        function closeAssignModal() { document.getElementById('assign-modal').classList.remove('visible'); }
+
+        function confirmAssign() {
+            const name = document.getElementById('assign-name').value.trim();
+            const rank = document.getElementById('assign-rank').value.trim();
+            if (!name) { showToast('Please enter a name', 'error'); return; }
+            const subdivision = getSubdivision();
+            subdivision.plots[window.currentPlotId] = { name, rank, status: 'claimed', assignedAt: new Date().toISOString() };
+            subdivision.requests = subdivision.requests.filter(r => !(r.plotId == window.currentPlotId && r.name.toLowerCase() === name.toLowerCase()));
+            saveData(); closeAssignModal(); renderAdminView();
+            showToast(`Plot #${window.currentPlotId} assigned to ${name}! 🏠`, 'success');
+            selectedRosterMember = null;
+            document.querySelectorAll('.roster-member').forEach(m => m.classList.remove('selected'));
+        }
+
+        function clearPlot() {
+            const subdivision = getSubdivision();
+            const plot = subdivision.plots[window.currentPlotId];
+            if (confirm(`Remove ${plot.name} from Plot #${window.currentPlotId}?`)) {
+                delete subdivision.plots[window.currentPlotId];
+                saveData(); closeAssignModal(); renderAdminView();
+                showToast(`Plot #${window.currentPlotId} cleared`, 'success');
+            }
+        }
+
+        function submitRequest() {
+            const name = document.getElementById('request-name').value.trim();
+            const plotId = document.getElementById('request-plot').value;
+            if (!name || !plotId) { showToast('Please fill in all fields', 'error'); return; }
+            const subdivision = getSubdivision();
+            if (subdivision.plots[plotId]) { showToast('This plot is already taken', 'error'); return; }
+            if (subdivision.requests.find(r => r.plotId == plotId)) { showToast('Someone already requested this plot', 'warning'); return; }
+            subdivision.requests.push({ name, plotId, requestedAt: new Date().toISOString() });
+            subdivision.plots[plotId] = { name, status: 'pending', requestedAt: new Date().toISOString() };
+            saveData(); renderPublicView();
+            document.getElementById('request-name').value = '';
+            document.getElementById('request-plot').value = '';
+            showToast('Request submitted! An officer will review it soon. 📬', 'success');
+        }
+
+        function renderRequests() {
+            const subdivision = getSubdivision();
+            if (!subdivision) return;
+            const container = document.getElementById('requests-list');
+            const pendingRequests = subdivision.requests || [];
+            let totalRequests = 0;
+            getNeighborhood().subdivisions.forEach(s => { totalRequests += (s.requests || []).length; });
+            document.getElementById('request-count-badge').textContent = totalRequests > 0 ? `(${totalRequests})` : '';
+            if (pendingRequests.length === 0) { container.innerHTML = '<p style="color: rgba(255,255,255,0.5);">No pending requests for this subdivision. 🎉</p>'; return; }
+            container.innerHTML = pendingRequests.map((r, idx) => `<div class="request-card"><div class="request-info"><h4>📝 ${r.name}</h4><p>Requesting Plot #${r.plotId}</p></div><div class="request-actions"><button class="btn btn-success" onclick="approveRequest(${idx})">✓ Approve</button><button class="btn btn-danger" onclick="denyRequest(${idx})">✗ Deny</button></div></div>`).join('');
+        }
+
+        function approveRequest(idx) {
+            const subdivision = getSubdivision();
+            const request = subdivision.requests[idx];
+            subdivision.plots[request.plotId] = { name: request.name, status: 'claimed', assignedAt: new Date().toISOString() };
+            subdivision.requests.splice(idx, 1);
+            saveData(); renderAdminView();
+            showToast(`${request.name} approved for Plot #${request.plotId}! 🎉`, 'success');
+        }
+
+        function denyRequest(idx) {
+            const subdivision = getSubdivision();
+            const request = subdivision.requests[idx];
+            if (subdivision.plots[request.plotId]?.status === 'pending') delete subdivision.plots[request.plotId];
+            subdivision.requests.splice(idx, 1);
+            saveData(); renderAdminView();
+            showToast('Request denied', 'warning');
+        }
+
+        function renderManualRoster() {
+            const container = document.getElementById('roster-list');
+            const members = appData.guildRoster || [];
+            container.innerHTML = `<div style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);"><div class="form-row" style="margin: 0;"><input type="text" class="form-input" id="add-roster-name" placeholder="Character name" style="flex: 2;"><input type="text" class="form-input" id="add-roster-rank" placeholder="Rank" style="flex: 1;"><button class="btn btn-primary" onclick="addRosterMember()">Add</button></div></div>${members.map(m => `<div class="roster-member" onclick="selectRosterMember('${m.name}', this)"><div><div class="roster-member-name">${m.name}</div><div class="roster-member-rank">${m.rank || 'Member'}</div></div><button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="event.stopPropagation(); removeRosterMember('${m.name}')">✗</button></div>`).join('')}`;
+        }
+
+        function addRosterMember() {
+            const name = document.getElementById('add-roster-name').value.trim();
+            const rank = document.getElementById('add-roster-rank').value.trim();
+            if (!name) { showToast('Please enter a name', 'error'); return; }
+            appData.guildRoster = appData.guildRoster || [];
+            if (appData.guildRoster.find(m => m.name.toLowerCase() === name.toLowerCase())) { showToast('Member already exists', 'warning'); return; }
+            appData.guildRoster.push({ name, rank: rank || 'Member' });
+            appData.guildRoster.sort((a, b) => a.name.localeCompare(b.name));
+            saveData();
+            document.getElementById('add-roster-name').value = '';
+            document.getElementById('add-roster-rank').value = '';
+            renderManualRoster();
+            showToast(`${name} added to roster`, 'success');
+        }
+
+        function removeRosterMember(name) { appData.guildRoster = appData.guildRoster.filter(m => m.name !== name); saveData(); renderManualRoster(); }
+
+        function selectRosterMember(name, element) {
+            selectedRosterMember = name;
+            document.querySelectorAll('.roster-member').forEach(m => m.classList.remove('selected'));
+            element.classList.add('selected');
+            showToast(`Selected ${name} - now click a plot to assign`, 'success');
+        }
+
+        function filterRoster() {
+            const search = document.getElementById('roster-search').value.toLowerCase();
+            document.querySelectorAll('.roster-member').forEach(el => {
+                const name = el.querySelector('.roster-member-name')?.textContent.toLowerCase() || '';
+                el.style.display = name.includes(search) ? 'flex' : 'none';
+            });
+        }
+
+        function renderSubdivisionManager() {
+            const neighborhood = getNeighborhood();
+            while (neighborhood.subdivisions.length < 10) {
+                neighborhood.subdivisions.push({ id: neighborhood.subdivisions.length + 1, name: `Subdivision ${neighborhood.subdivisions.length + 1}`, enabled: false, plots: {}, requests: [] });
+            }
+            document.getElementById('subdivision-manager').innerHTML = neighborhood.subdivisions.map((s, idx) => {
+                const plotCount = Object.values(s.plots).filter(p => p.status === 'claimed').length;
+                return `<div class="subdivision-item ${s.enabled ? '' : 'inactive'}"><div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><span style="color: var(--accent); font-weight: 600;">#${s.id}</span><input type="text" class="subdivision-name-input" value="${s.name}" onchange="renameSubdivision(${idx}, this.value)" ${s.enabled ? '' : 'disabled'}><span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">${plotCount}/55 plots</span></div><button class="btn ${s.enabled ? 'btn-danger' : 'btn-success'} subdivision-toggle" onclick="toggleSubdivision(${idx})">${s.enabled ? 'Disable' : 'Enable'}</button></div>`;
+            }).join('');
+        }
+
+        function toggleSubdivision(idx) {
+            const neighborhood = getNeighborhood();
+            const subdivision = neighborhood.subdivisions[idx];
+            if (subdivision.enabled && neighborhood.subdivisions.filter(s => s.enabled).length <= 1) { showToast('You must have at least one subdivision enabled', 'error'); return; }
+            subdivision.enabled = !subdivision.enabled;
+            saveData();
+            if (!subdivision.enabled && currentSubdivision === subdivision.id) currentSubdivision = getEnabledSubdivisions()[0]?.id || 1;
+            renderAdminView();
+            showToast(`${subdivision.name} ${subdivision.enabled ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function renameSubdivision(idx, newName) {
+            getNeighborhood().subdivisions[idx].name = newName.trim() || `Subdivision ${idx + 1}`;
+            saveData();
+            renderSubdivisionTabs();
+            showToast('Subdivision renamed', 'success');
+        }
+
+        function changePassword() {
+            const newPass = document.getElementById('new-password').value;
+            if (!newPass || newPass.length < 4) { showToast('Password must be at least 4 characters', 'error'); return; }
+            appData.adminPassword = newPass;
+            saveData();
+            document.getElementById('new-password').value = '';
+            showToast('Password updated!', 'success');
+        }
+
+        function exportData() {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' }));
+            a.download = 'cozykeep-backup.json';
+            a.click();
+            showToast('Data exported!', 'success');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.neighborhoods) { appData = data; currentSubdivision = getEnabledSubdivisions()[0]?.id || 1; saveData(); renderAll(); showToast('Data imported!', 'success'); }
+                    else showToast('Invalid data format', 'error');
+                } catch (err) { showToast('Failed to parse file', 'error'); }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetData() { if (confirm('⚠️ This will delete ALL data. Are you sure?') && confirm('This cannot be undone. Really reset?')) { localStorage.removeItem('cozykeep_data_v2'); location.reload(); } }
+
+        function showPlotTooltip(e, plotId, plot) {
+            document.getElementById('tooltip-title').textContent = plot ? (plot.status === 'pending' ? '⏳ ' : '🏠 ') + plot.name : '📍 Empty Plot';
+            document.getElementById('tooltip-content').innerHTML = plot ? `<p>📍 Plot #${plotId}</p>${plot.rank ? `<p>🎖️ ${plot.rank}</p>` : ''}<p>${plot.status === 'pending' ? '⏳ Pending' : '✓ Resident'}</p>` : `<p>Plot #${plotId}</p><p>Available!</p>`;
+            document.getElementById('tooltip').classList.add('visible');
+            moveTooltip(e);
+        }
+
+        function hideTooltip() { document.getElementById('tooltip').classList.remove('visible'); }
+        function moveTooltip(e) { const t = document.getElementById('tooltip'); t.style.left = (e.clientX + 15) + 'px'; t.style.top = (e.clientY + 15) + 'px'; }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `<span>${type === 'success' ? '✓' : type === 'error' ? '✗' : '!'}</span> ${message}`;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        function initParticles() {
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const particleColor = currentFaction === 'horde' ? 'rgba(255, 74, 74, ' : 'rgba(74, 158, 255, ';
+            const particles = Array.from({ length: 40 }, () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: Math.random() * 2 + 1, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, alpha: Math.random() * 0.4 + 0.1 }));
+            (function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fillStyle = particleColor + p.alpha + ')'; ctx.fill();
+                });
+                particles.forEach((p1, i) => particles.slice(i + 1).forEach(p2 => {
+                    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                    if (dist < 120) { ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = particleColor + (0.08 * (1 - dist / 120)) + ')'; ctx.stroke(); }
+                }));
+                requestAnimationFrame(animate);
+            })();
+            window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        }
+    </script>
+</body>
+</html>
